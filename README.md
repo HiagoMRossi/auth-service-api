@@ -1,6 +1,6 @@
 # auth-service-api
 
-A REST authentication API built with Spring Boot, JWT, and PostgreSQL.
+A simple and production-style authentication REST API built with Spring Boot, Spring Security, JWT, and PostgreSQL.
 
 ## Features
 
