@@ -4,13 +4,13 @@ A simple and production-style authentication REST API built with Spring Boot, Sp
 
 ## Features
 
-User registration with password hashing
-Authentication with JWT
-Protected endpoint with Bearer token
-Request validation
-Global exception handling
-PostgreSQL persistence with Spring Data JPA
-HTTP endpoint tests with MockMvc
+- User registration with password hashing
+- Authentication with JWT
+- Protected endpoint with Bearer token
+- Request validation
+- Global exception handling
+- PostgreSQL persistence with Spring Data JPA
+- HTTP endpoint tests with MockMvc
 
 ## Tech Stack
 
