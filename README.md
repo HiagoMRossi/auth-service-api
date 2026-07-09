@@ -1,6 +1,10 @@
 # Auth Service API
 
+[![CI](https://github.com/HiagoMRossi/auth-service-api/actions/workflows/ci.yml/badge.svg)](https://github.com/HiagoMRossi/auth-service-api/actions/workflows/ci.yml)
+
 Authentication REST API built with Java 21, Spring Boot, Spring Security, JWT, Spring Data JPA, PostgreSQL, and Maven.
+
+Auth Service API provides a reusable authentication foundation with registration, login, refresh tokens, roles, protected user data, and logout behavior.
 
 ## Features
 
