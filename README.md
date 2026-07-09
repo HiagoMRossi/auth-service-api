@@ -1,47 +1,48 @@
-# auth-service-api
+# Auth Service API
 
-A simple and production-style authentication REST API built with Spring Boot, Spring Security, JWT, and PostgreSQL.
+[![CI](https://github.com/HiagoMRossi/auth-service-api/actions/workflows/ci.yml/badge.svg)](https://github.com/HiagoMRossi/auth-service-api/actions/workflows/ci.yml)
+
+Authentication REST API built with Java 21, Spring Boot, Spring Security, JWT, Spring Data JPA, PostgreSQL, and Maven.
+
+Auth Service API provides a reusable authentication foundation with registration, login, refresh tokens, roles, protected user data, and logout behavior.
 
 ## Features
 
 - User registration with password hashing
-- Authentication with JWT
-- Protected endpoint with Bearer token
+- User login with JWT access and refresh token generation
+- USER and ADMIN roles
+- Protected endpoint returning the current authenticated user
+- Simple logout with in-memory token blacklist
 - Request validation
-- Global exception handling
-- PostgreSQL persistence with Spring Data JPA
-- HTTP endpoint tests with MockMvc
+- Improved authentication error responses
+- PostgreSQL persistence
+- Unit tests for JWT and authentication services
+- Protected endpoint tests with MockMvc and the security filter enabled
+- OpenAPI documentation with Swagger UI
 
-## Tech Stack
+## Architecture
 
-- Java 21
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- PostgreSQL
-- Maven
-- JWT
-- MockMvc / JUnit
-
-## Project Structure
-
-- `controller`: REST endpoints for authentication and protected routes
-- `service`: business logic for authentication and JWT operations
+- `controller`: REST endpoints for authentication and user access
+- `service`: authentication flow, JWT generation, and user lookup
 - `repository`: Spring Data JPA repositories
-- `entity`: JPA entities mapped to the database
-- `dto`: request and response payload classes
-- `config`: security and JWT-related configuration
-- `exception`: custom exceptions and global exception handling
+- `entity`: JPA user model
+- `dto`: request and response payloads
+- `config`: Spring Security and JWT configuration
+- `exception`: custom exceptions and API error handling
+
+The API keeps authentication rules in the service layer, exposes DTOs at the HTTP boundary, and stores users through Spring Data JPA.
 
 ## API Endpoints
 
-### `POST /auth/register`
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/auth/register` | Public | Register a new user |
+| POST | `/auth/login` | Public | Authenticate and return access and refresh tokens |
+| POST | `/auth/refresh` | Public | Generate new tokens from a valid refresh token |
+| POST | `/auth/logout` | Protected | Blacklist the current access token and optional refresh token |
+| GET | `/users/me` | Protected | Return the current authenticated user |
 
-Creates a new user account.
-
-Access: Public
-
-Example request:
+### Register
 
 ```http
 POST /auth/register
@@ -54,24 +55,7 @@ Content-Type: application/json
 }
 ```
 
-Example response:
-
-```json
-{
-  "id": 1,
-  "name": "Hiago Rossi",
-  "email": "hiago@example.com",
-  "createdAt": "2026-04-22T17:00:00"
-}
-```
-
-### `POST /auth/login`
-
-Authenticates a user and returns a JWT token.
-
-Access: Public
-
-Example request:
+### Login
 
 ```http
 POST /auth/login
@@ -87,18 +71,36 @@ Example response:
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
   "type": "Bearer"
 }
 ```
 
-### `GET /users/me`
+### Refresh Token
 
-Simple protected endpoint used to verify authenticated access.
+```http
+POST /auth/refresh
+Content-Type: application/json
 
-Access: Protected
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
 
-Example request:
+### Logout
+
+```http
+POST /auth/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+### Current User
 
 ```http
 GET /users/me
@@ -109,57 +111,91 @@ Example response:
 
 ```json
 {
-  "message": "You are authenticated"
+  "id": 1,
+  "name": "Hiago Rossi",
+  "email": "hiago@example.com",
+  "role": "USER",
+  "createdAt": "2026-07-09T10:00:00"
 }
 ```
 
-## Error Responses
+## OpenAPI
 
-- `400 Bad Request`: invalid request body or validation error
-- `401 Unauthorized`: invalid credentials or missing/invalid authentication
-- `409 Conflict`: e-mail already registered
+After starting the application, access:
 
-## How to Run Locally
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-1. Install and start PostgreSQL locally.
-2. Create a database named `auth_service_api`.
-3. Review `src/main/resources/application.properties` and adjust credentials if needed.
-4. Run the application with Maven Wrapper:
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/auth_service_api` | PostgreSQL JDBC URL |
+| `DB_USERNAME` | `postgres` | Database username |
+| `DB_PASSWORD` | `postgres` | Database password for local development |
+| `DDL_AUTO` | `update` | Hibernate schema strategy |
+| `SHOW_SQL` | `false` | Enables SQL logging |
+| `FORMAT_SQL` | `false` | Formats SQL logs |
+| `JWT_SECRET` | required | Secret used to sign JWTs. Use at least 32 characters. |
+| `JWT_EXPIRATION_MS` | `3600000` | Access token expiration in milliseconds |
+| `JWT_REFRESH_EXPIRATION_MS` | `604800000` | Refresh token expiration in milliseconds |
+
+See `src/main/resources/application-example.properties` for a complete example.
+
+## Running with Docker
+
+Start PostgreSQL:
 
 ```bash
+docker compose up -d
+```
+
+Run the API:
+
+```bash
+export JWT_SECRET="replace-with-a-secure-secret-at-least-32-characters"
 ./mvnw spring-boot:run
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
-.\mvnw spring-boot:run
+$env:JWT_SECRET="replace-with-a-secure-secret-at-least-32-characters"
+.\mvnw.cmd spring-boot:run
 ```
 
-The API will start on `http://localhost:8080`.
-
-## How to Test
-
-Run the test suite with Maven Wrapper:
+## Running Tests
 
 ```bash
 ./mvnw test
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
-.\mvnw test
+.\mvnw.cmd test
 ```
+
+## Technical Decisions
+
+- Passwords are hashed before persistence using Spring Security.
+- JWT secret is required through `JWT_SECRET`; it is not hardcoded in the application config.
+- Access and refresh tokens are stateless JWTs signed with the same secret and separated by a token-type claim.
+- Users are registered with the `USER` role by default; `ADMIN` is available for future authorization rules.
+- Logout uses an in-memory token blacklist. This is useful for local/demo behavior, but production deployments should store revoked tokens in Redis or a database because memory is lost on restart.
+- Controller tests use MockMvc and include a protected endpoint test with the JWT filter enabled.
+- Service unit tests cover JWT generation/validation and authentication rules.
+- OpenAPI is generated from the Spring MVC controllers with springdoc-openapi.
 
 ## Future Improvements
 
-- Refresh token support
-- Roles and authorities
-- Docker setup
-- Swagger / OpenAPI documentation
-- Database migrations with Flyway
+- Email verification flow
+- Flyway database migrations
+- Persistent refresh token storage with rotation
+- Redis-backed token blacklist
+- ADMIN-only endpoints to demonstrate authorization rules
+- Dockerfile for the API service
 
-## Author
+## License
 
-Hiago Rossi
+This project is licensed under the MIT License.
