@@ -13,6 +13,10 @@ import java.util.Date;
 @Service
 public class JwtService {
 
+    private static final String TOKEN_TYPE_CLAIM = "token_type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     private final JwtProperties jwtProperties;
 
     public JwtService(JwtProperties jwtProperties) {
@@ -20,11 +24,20 @@ public class JwtService {
     }
 
     public String generateToken(String email) {
+        return generateToken(email, jwtProperties.getExpiration(), ACCESS_TOKEN_TYPE);
+    }
+
+    public String generateRefreshToken(String email) {
+        return generateToken(email, jwtProperties.getRefreshExpiration(), REFRESH_TOKEN_TYPE);
+    }
+
+    private String generateToken(String email, long expiration, String tokenType) {
         Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + jwtProperties.getExpiration());
+        Date expirationDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
                 .subject(email)
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .issuedAt(now)
                 .expiration(expirationDate)
                 .signWith(getSigningKey())
@@ -42,6 +55,18 @@ public class JwtService {
         } catch (Exception ex) {
             return false;
         }
+    }
+
+    public boolean isAccessToken(String token) {
+        return ACCESS_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return REFRESH_TOKEN_TYPE.equals(extractTokenType(token));
+    }
+
+    private String extractTokenType(String token) {
+        return extractAllClaims(token).get(TOKEN_TYPE_CLAIM, String.class);
     }
 
     private SecretKey getSigningKey() {

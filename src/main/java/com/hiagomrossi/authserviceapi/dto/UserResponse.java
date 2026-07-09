@@ -2,7 +2,7 @@ package com.hiagomrossi.authserviceapi.dto;
 
 import java.time.LocalDateTime;
 
-public class RegisterResponse {
+public class UserResponse {
 
     private Long id;
     private String name;

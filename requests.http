@@ -1,2 +1,43 @@
-GET http://localhost:8080/users/me
-Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJoaWFnb0BleGFtcGxlLmNvbSIsImlhdCI6MTc3Njg2OTU1OCwiZXhwIjoxNzc2ODczMTU4fQ.rpdYz6kQxSCdiWJeWRzMOtm_nRv98Ttgsq-yncaGRpiOM7vNm8gPyS0uwMF-uC1z-luChso5yoWbTZj7khhwew
+@baseUrl = http://localhost:8080
+@accessToken = paste-access-token-here
+@refreshToken = paste-refresh-token-here
+
+### Register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Hiago Rossi",
+  "email": "hiago@example.com",
+  "password": "123456"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "hiago@example.com",
+  "password": "123456"
+}
+
+### Refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Current authenticated user
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
