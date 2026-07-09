@@ -1,47 +1,39 @@
-# auth-service-api
+# Auth Service API
 
-A simple and production-style authentication REST API built with Spring Boot, Spring Security, JWT, and PostgreSQL.
+Authentication REST API built with Java 21, Spring Boot, Spring Security, JWT, Spring Data JPA, PostgreSQL, and Maven.
 
 ## Features
 
 - User registration with password hashing
-- Authentication with JWT
-- Protected endpoint with Bearer token
+- User login with JWT access token generation
+- Protected endpoint for authenticated users
 - Request validation
 - Global exception handling
-- PostgreSQL persistence with Spring Data JPA
+- PostgreSQL persistence
 - HTTP endpoint tests with MockMvc
+- OpenAPI documentation with Swagger UI
 
-## Tech Stack
+## Architecture
 
-- Java 21
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- PostgreSQL
-- Maven
-- JWT
-- MockMvc / JUnit
-
-## Project Structure
-
-- `controller`: REST endpoints for authentication and protected routes
-- `service`: business logic for authentication and JWT operations
+- `controller`: REST endpoints for authentication and user access
+- `service`: authentication flow, JWT generation, and user lookup
 - `repository`: Spring Data JPA repositories
-- `entity`: JPA entities mapped to the database
-- `dto`: request and response payload classes
-- `config`: security and JWT-related configuration
-- `exception`: custom exceptions and global exception handling
+- `entity`: JPA user model
+- `dto`: request and response payloads
+- `config`: Spring Security and JWT configuration
+- `exception`: custom exceptions and API error handling
+
+The API keeps authentication rules in the service layer, exposes DTOs at the HTTP boundary, and stores users through Spring Data JPA.
 
 ## API Endpoints
 
-### `POST /auth/register`
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| POST | `/auth/register` | Public | Register a new user |
+| POST | `/auth/login` | Public | Authenticate and return a JWT |
+| GET | `/users/me` | Protected | Verify the current authenticated user |
 
-Creates a new user account.
-
-Access: Public
-
-Example request:
+### Register
 
 ```http
 POST /auth/register
@@ -54,24 +46,7 @@ Content-Type: application/json
 }
 ```
 
-Example response:
-
-```json
-{
-  "id": 1,
-  "name": "Hiago Rossi",
-  "email": "hiago@example.com",
-  "createdAt": "2026-04-22T17:00:00"
-}
-```
-
-### `POST /auth/login`
-
-Authenticates a user and returns a JWT token.
-
-Access: Public
-
-Example request:
+### Login
 
 ```http
 POST /auth/login
@@ -92,74 +67,83 @@ Example response:
 }
 ```
 
-### `GET /users/me`
-
-Simple protected endpoint used to verify authenticated access.
-
-Access: Protected
-
-Example request:
+### Current User
 
 ```http
 GET /users/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
-Example response:
+## OpenAPI
 
-```json
-{
-  "message": "You are authenticated"
-}
+After starting the application, access:
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/auth_service_api` | PostgreSQL JDBC URL |
+| `DB_USERNAME` | `postgres` | Database username |
+| `DB_PASSWORD` | `postgres` | Database password for local development |
+| `DDL_AUTO` | `update` | Hibernate schema strategy |
+| `SHOW_SQL` | `false` | Enables SQL logging |
+| `FORMAT_SQL` | `false` | Formats SQL logs |
+| `JWT_SECRET` | development placeholder | Secret used to sign JWTs. Replace it before running outside local development. |
+| `JWT_EXPIRATION_MS` | `3600000` | Token expiration in milliseconds |
+
+See `src/main/resources/application-example.properties` for a complete example.
+
+## Running with Docker
+
+Start PostgreSQL:
+
+```bash
+docker compose up -d
 ```
 
-## Error Responses
-
-- `400 Bad Request`: invalid request body or validation error
-- `401 Unauthorized`: invalid credentials or missing/invalid authentication
-- `409 Conflict`: e-mail already registered
-
-## How to Run Locally
-
-1. Install and start PostgreSQL locally.
-2. Create a database named `auth_service_api`.
-3. Review `src/main/resources/application.properties` and adjust credentials if needed.
-4. Run the application with Maven Wrapper:
+Run the API:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
-.\mvnw spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-The API will start on `http://localhost:8080`.
-
-## How to Test
-
-Run the test suite with Maven Wrapper:
+## Running Tests
 
 ```bash
 ./mvnw test
 ```
 
-On Windows PowerShell, use:
+On Windows PowerShell:
 
 ```powershell
-.\mvnw test
+.\mvnw.cmd test
 ```
+
+## Technical Decisions
+
+- Passwords are hashed before persistence using Spring Security.
+- JWT settings are externalized through environment variables.
+- Controller tests use MockMvc and mocked services to validate HTTP behavior quickly.
+- OpenAPI is generated from the Spring MVC controllers with springdoc-openapi.
 
 ## Future Improvements
 
 - Refresh token support
 - Roles and authorities
-- Docker setup
-- Swagger / OpenAPI documentation
-- Database migrations with Flyway
+- Email verification flow
+- Flyway database migrations
+- Integration tests for the full authentication flow
+- Dockerfile for the API service
 
-## Author
+## License
 
-Hiago Rossi
+This project is licensed under the MIT License.
